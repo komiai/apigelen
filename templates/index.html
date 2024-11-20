@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Testing Flask API with Image Prediction</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+      }
+
+      form {
+        margin: 20px;
+      }
+
+      input[type="file"],
+      button {
+        padding: 10px;
+        margin: 5px;
+      }
+
+      #result {
+        margin: 20px;
+      }
+
+      img {
+        max-width: 300px;
+        margin-top: 10px;
+      }
+
+      /* Style the anchor tag to make it look like a clickable link */
+      a {
+        color: blue; /* Change the color to blue */
+        text-decoration: underline; /* Underline the text */
+        cursor: pointer; /* Change cursor to pointer on hover */
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Testing Flask API with Image Prediction</h2>
+
+    <form id="predictionForm" enctype="multipart/form-data">
+      <input type="file" id="imageFile" name="imageFile" /><br />
+      <button type="submit">Predict</button>
+    </form>
+
+    <div id="result"></div>
+
+    <script>
+      document.getElementById("predictionForm").addEventListener("submit", function (event) {
+        event.preventDefault(); // Prevent the form from submitting via the browser
+
+        var formData = new FormData();
+        var imageFile = document.getElementById("imageFile").files[0];
+        formData.append("imageFile", imageFile);
+
+        // Make a POST request to Flask API
+        fetch("/predict", {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log("Received data:", data);
+
+            // Check if predictions are received successfully
+            if (data.predictions) {
+              // Display the prediction results
+              var predictionList = data.predictions;
+              console.log("Prediction list:", predictionList);
+
+              var predictionText = "<strong>Predictions:</strong><br/>";
+              predictionList.forEach(function (prediction) {
+                console.log("Prediction:", prediction);
+                predictionText += "<a href='/class_info/" + prediction[0] + "'>" + prediction[0] + "</a>: " + prediction[1] + "<br/>";
+              });
+              console.log("Prediction text:", predictionText);
+
+              // Update the result div with the prediction text
+              document.getElementById("result").innerHTML = predictionText;
+            } else {
+              console.error("Error: No predictions received");
+            }
+
+            // Display the uploaded image
+            var imageUrl = URL.createObjectURL(imageFile);
+            console.log("Image URL:", imageUrl);
+            var imgElement = document.createElement("img");
+            imgElement.src = imageUrl;
+            document.getElementById("result").appendChild(imgElement);
+          })
+
+          .catch((error) => {
+            console.error("Error:", error);
+          });
+      });
+
+      // Add event listener for prediction link clicks
+      document.getElementById("result").addEventListener("click", function (event) {
+        if (event.target.tagName === "A") {
+          event.preventDefault(); // Prevent default link behavior
+          var href = event.target.getAttribute("href");
+          window.location.href = href; // Redirect to the prediction info page
+        }
+      });
+    </script>
+  </body>
+</html>
